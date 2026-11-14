@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长征 · 知识图谱</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="view-map view-flow">
+<div id="app">
+
+  <header id="header">
+    <div class="brand">
+      <div class="brand-star">★</div>
+      <div class="brand-text">
+        <h1>长征 · 知识图谱</h1>
+        <div class="brand-sub">1934.10 — 1936.10</div>
+      </div>
+    </div>
+    <div class="view-toggle">
+      <button id="btn-view-map" class="active" title="中国工农红军长征路线图 · 四路红军行军路线 · 悬停/点击节点查看详情">路线图</button>
+      <button id="btn-view-tree" title="动态建制分级树 · 整编前后干部流向图">红军序列</button>
+      <button id="btn-view-compare" title="四路红军兵力折损 · 1955授衔将帅 · 牺牲英烈">统计</button>
+      <button id="btn-view-cast" title="《伟大的长征》角色谱 · 长征之后的战役 · 八路军·新四军整编序列 · 全国红军与根据地">番外</button>
+    </div>
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+      <input id="search-input" placeholder="搜索将领/英雄/人物，进入聚焦模式…" autocomplete="off">
+      <div id="search-dropdown" class="hidden"></div>
+    </div>
+    <div class="canvas-tools">
+      <button id="btn-fit" title="一键复位 Fit to Screen">⤢ 复位</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="canvas-wrap">
+      <svg id="canvas"></svg>
+
+      <svg id="route-map" class="hidden" role="img" aria-label="中国工农红军长征路线图"></svg>
+      <!-- <div id="route-title" class="hidden">
+        <h1>中国工农红军长征路线图</h1>
+        <p>1934 — 1936 · 红一、红二、红四方面军及红二十五军行进路线</p>
+      </div> -->
+      <div id="route-legend" class="legend hidden"></div>
+      <div id="route-note" class="hidden">底图数据：阿里云 DataV · 路线与节点为示意，不代表精确行军轨迹</div>
+      <div id="route-hint" class="hidden">滚轮缩放 · 拖拽平移 · 悬停/点击节点 · 点击图例显隐路线</div>
+      <div id="route-loading" class="hidden"><span>正在加载地图数据…</span></div>
+      <div id="route-error" class="hidden">
+        <span id="route-error-text"></span>
+        <button id="route-retry">重新加载</button>
+      </div>
+      <div id="route-tip" class="hidden"></div>
+
+      <div id="cast-view" class="hidden"></div>
+
+      <div id="cmp-subtabs">
+        <button data-sub="forces" class="active">兵力折损</button>
+        <button data-sub="ranks">授衔将帅</button>
+        <button data-sub="martyrs">牺牲英烈</button>
+      </div>
+
+      <button id="btn-perspective" title="叙事视角说明">ⓘ 视角</button>
+      <div id="perspective-tip" class="hidden">
+        <div class="pt-title">叙事视角说明</div>
+        <div class="pt-item">本图谱以<b>中央红军（红一方面军）</b>视角为主线叙事，时间轴节点跟随中央红军的行进与整编轨迹。</div>
+        <div class="pt-item">红四方面军于<b>懋功会师（1935.6）</b>、红二方面军于<b>甘孜会师（1936.7）</b>进入序列视图。</div>
+        <div class="pt-item"><b>俄界改编（1935.9）</b>后，画面同时呈现北上的陕甘支队与南下的红军总部两条线索。</div>
+        <div class="pt-item">红二、六军团长征前段（湘鄂川黔时期）及红25军单独长征未纳入时间轴主干，仅在其将领履历中体现。</div>
+        <div class="pt-item">部队人数、干部任职等史实细节存在不同记载口径，本图谱取通行说法，个别团级主官记载残缺处从略。</div>
+      </div>
+
+      <div id="tf-switch">
+        <button id="tf-btn-tree" class="active" title="动态建制分级树">建制树</button>
+        <button id="tf-btn-flow" title="整编前后干部流向图">整编流向</button>
+      </div>
+
+      <div id="canvas-legend">
+        <div class="lg-row">
+          <div class="lg"><i class="lg-icon mil">⚔</i>军事指挥官</div>
+          <div class="lg"><i class="lg-icon pol">★</i>政治官员</div>
+          <div class="lg"><i class="lg-badge gold">兼</i>兼任数职</div>
+          <div class="lg"><i class="lg-badge dashed">代</i>代理职务</div>
+          <!-- <div class="lg"><i class="lg-badge red">伤</i>负伤未到职</div> -->
+        </div>
+        <div class="lg-tip">拖拽平移 · 滚轮缩放 · 双击节点折叠/展开下级 · 悬停查看详情</div>
+      </div>
+
+      <div id="node-tip" class="hidden"></div>
+
+      <div id="stage-strength" class="hidden"></div>
+
+      <div id="focus-banner" class="hidden">
+        <span id="focus-banner-text"></span>
+        <button id="btn-exit-focus">退出聚焦</button>
+      </div>
+
+      <div id="flow-tip" class="hidden"></div>
+      <div id="flow-empty" class="hidden">当前时间节点无重大整编，<br>请切换至带 <b>●</b> 标记的节点查看整编流向</div>
+    </section>
+
+    <aside id="panel">
+      <div class="panel-section" id="panel-event">
+        <div class="panel-sec-title">时空节点</div>
+        <div id="event-card">
+          <div class="event-date" id="ev-date"></div>
+          <div class="event-title" id="ev-title"></div>
+          <div class="event-fact" id="ev-fact"></div>
+          <div class="event-desc" id="ev-desc"></div>
+        </div>
+      </div>
+      <div class="panel-section" id="panel-detail">
+        <div class="panel-sec-title" id="detail-sec-title">详情</div>
+        <div id="detail-body"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer id="timeline-bar">
+    <div class="tl-controls">
+      <button id="btn-prev" title="上一节点">‹</button>
+      <button id="btn-play" title="播放 / 暂停">▶</button>
+      <button id="btn-next" title="下一节点">›</button>
+    </div>
+    <div id="timeline">
+      <div id="tl-track">
+        <div id="tl-progress"></div>
+      </div>
+      <div id="tl-nodes"></div>
+    </div>
+    <div id="tl-caption"></div>
+  </footer>
+</div>
+
+<script src="js/geo-data.js"></script>
+<script src="js/data.js"></script>
+<script src="js/series-data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/sankey.js"></script>
+<script src="js/compare.js"></script>
+<script src="js/routemap.js"></script>
+<script src="js/cast.js"></script>
+<script src="js/profiler.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
